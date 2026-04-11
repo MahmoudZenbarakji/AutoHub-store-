@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Navigate, useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { Card } from '@/components/common/Card';
 import { OrderDetailsPanel } from '@/components/dashboard/OrderDetailsPanel';
 import { OrdersDashToolbar } from '@/components/dashboard/OrdersDashToolbar';
-import { getOrderDetail } from '@/mock/orderDetailsData';
+import { useOrderDetails } from '@/hooks/useOrderDetails';
 import { storeOverview } from '@/mock/dashboardData';
 import type { StoreStatus } from '@/mock/dashboardData';
 
@@ -13,16 +14,18 @@ export function OrderDetails() {
   const [scheduledFilterActive, setScheduledFilterActive] = useState(false);
   const [storeStatus, setStoreStatus] = useState<StoreStatus>(storeOverview.storeStatus);
 
-  const order = useMemo(() => getOrderDetail(orderId), [orderId]);
+  const { order, loading, error, submitStatusUpdate } = useOrderDetails(orderId);
 
-  if (!order) {
+  if (!orderId) {
     return <Navigate to="/dashboard/orders" replace />;
   }
+
+  const titleSuffix = order?.orderNumber ?? orderId;
 
   return (
     <>
       <Helmet>
-        <title>AutoHub — Order #{order.orderNumber}</title>
+        <title>AutoHub — Order #{titleSuffix}</title>
       </Helmet>
       <div className="flex w-full min-w-0 flex-col gap-6">
         <OrdersDashToolbar
@@ -36,11 +39,25 @@ export function OrderDetails() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
         >
-          <OrderDetailsPanel
-            order={order}
-            onAccept={() => undefined}
-            onReject={() => undefined}
-          />
+          {loading ? (
+            <Card className="w-full min-w-0 overflow-hidden border shadow-xs">
+              <p className="p-8 text-center text-sm text-muted-foreground">Loading…</p>
+            </Card>
+          ) : error ? (
+            <Card className="w-full min-w-0 overflow-hidden border shadow-xs">
+              <p className="p-8 text-center text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            </Card>
+          ) : order ? (
+            <OrderDetailsPanel
+              order={order}
+              onAccept={() => void submitStatusUpdate('store_accept')}
+              onReject={() => void submitStatusUpdate('store_reject')}
+            />
+          ) : (
+            <Navigate to="/dashboard/orders" replace />
+          )}
         </motion.div>
       </div>
     </>

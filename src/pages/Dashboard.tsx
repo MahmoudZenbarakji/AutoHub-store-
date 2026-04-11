@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { AnnouncementCarousel } from '@/components/dashboard/AnnouncementCarousel';
@@ -6,24 +6,27 @@ import { DashboardChart } from '@/components/dashboard/DashboardChart';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { StatRow } from '@/components/dashboard/StatRow';
 import { StoreStatusToggle } from '@/components/dashboard/StoreStatusToggle';
+import { useDashboardHome } from '@/hooks/useDashboardHome';
+import { useDashboardStoreStatus } from '@/hooks/useDashboardStoreStatus';
 import {
-  announcementItems,
-  ordersLast7DaysChart,
-  salesLast7DaysChart,
-  storeOverview,
-} from '@/mock/dashboardData';
-import type { StoreStatus } from '@/mock/dashboardData';
+  formatStatNumber,
+  mapAnnouncementBanners,
+  mapOrdersChartData,
+  mapSalesChartData,
+} from '@/utils/mapDashboardHomeData';
 
 export function Dashboard() {
-  const [storeStatus, setStoreStatus] = useState<StoreStatus>(storeOverview.storeStatus);
-  const [isLoading, setIsLoading] = useState(true);
+  const { dashboardData, loading } = useDashboardHome();
+  const { isStoreOnline, onStoreStatusChange } = useDashboardStoreStatus(dashboardData);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setIsLoading(false), 650);
-    return () => window.clearTimeout(timer);
-  }, []);
+  const ordersChartData = useMemo(() => mapOrdersChartData(dashboardData), [dashboardData]);
+  const salesChartData = useMemo(() => mapSalesChartData(dashboardData), [dashboardData]);
+  const announcementItemsForCarousel = useMemo(() => {
+    const mapped = mapAnnouncementBanners(dashboardData);
+    return mapped.length > 0 ? mapped : [{ id: 'empty', title: '', preview: '' }];
+  }, [dashboardData]);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <>
         <Helmet>
@@ -49,27 +52,32 @@ export function Dashboard() {
           <div className="grid gap-6 lg:grid-cols-2 lg:items-start lg:gap-8">
             <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
               <StatRow label="Current Store status">
-                <StoreStatusToggle value={storeStatus} onChange={setStoreStatus} />
+                <StoreStatusToggle
+                  value={isStoreOnline ? 'on' : 'off'}
+                  onChange={onStoreStatusChange}
+                />
               </StatRow>
               <StatRow label="Current Store rate">
-                {storeOverview.storeRating} ★
+                {formatStatNumber(dashboardData?.store_rate)} ★
               </StatRow>
               <StatRow label="Out of Stock items">
-                {storeOverview.outOfStockCount} 🚨
+                {formatStatNumber(dashboardData?.out_of_stock_items_count)} 🚨
               </StatRow>
               <StatRow label="Active Discounts">
-                {storeOverview.activeDiscounts} 🎯
+                {formatStatNumber(dashboardData?.active_discounts_count)} 🎯
               </StatRow>
-              <StatRow label="Active Orders">{storeOverview.activeOrders}</StatRow>
+              <StatRow label="Active Orders">
+                {formatStatNumber(dashboardData?.active_orders_count)}
+              </StatRow>
             </div>
-            <AnnouncementCarousel items={announcementItems} />
+            <AnnouncementCarousel items={announcementItemsForCarousel} />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <DashboardChart title="order in last 7 days" data={ordersLast7DaysChart} />
+            <DashboardChart title="order in last 7 days" data={ordersChartData} />
             <DashboardChart
               title="Total Sales in last 7 days"
-              data={salesLast7DaysChart}
+              data={salesChartData}
               valueFormatter={(value) => `$${value.toLocaleString()}`}
             />
           </div>

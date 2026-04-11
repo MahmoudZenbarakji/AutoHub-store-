@@ -6,12 +6,16 @@ type OrdersKanbanBoardProps = {
   columns: { id: OrderColumnId; title: string }[];
   orders: KanbanOrder[];
   scheduledFilterActive: boolean;
+  selectedOrderId?: string | null;
+  onSelectOrder?: (order: KanbanOrder) => void;
 };
 
 export function OrdersKanbanBoard({
   columns,
   orders,
   scheduledFilterActive,
+  selectedOrderId,
+  onSelectOrder,
 }: OrdersKanbanBoardProps) {
   return (
     <div className="grid min-h-[min(70vh,720px)] w-full min-w-0 grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
@@ -45,7 +49,14 @@ export function OrdersKanbanBoard({
               {columnOrders.length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">No orders</p>
               ) : (
-                columnOrders.map((order) => <OrderCard key={order.id} order={order} />)
+                columnOrders.map((order) => (
+                  <OrderCard
+                    key={order.id}
+                    order={order}
+                    selected={selectedOrderId === order.id}
+                    onSelect={onSelectOrder}
+                  />
+                ))
               )}
             </div>
           </section>

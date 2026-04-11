@@ -5,28 +5,29 @@ import { cn } from '@/lib/utils';
 
 type OrderCardProps = {
   order: KanbanOrder;
+  selected?: boolean;
+  onSelect?: (order: KanbanOrder) => void;
 };
 
-export function OrderCard({ order }: OrderCardProps) {
+export function OrderCard({ order, selected, onSelect }: OrderCardProps) {
   return (
-    <Link
-      to={`/dashboard/orders/${order.id}`}
+    <Card
       className={cn(
-        'block rounded-xl outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring',
-        'hover:shadow-md',
+        'h-full border shadow-xs transition-shadow',
+        selected && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
+        onSelect && 'hover:shadow-md',
       )}
     >
-      <Card
-        className={cn(
-          'h-full border shadow-xs transition-shadow hover:shadow-md',
-          order.scheduled && 'overflow-hidden pt-0',
-        )}
+      {order.scheduled ? (
+        <div className="border-b border-primary/30 bg-primary/10 px-3 py-2 text-center text-xs font-medium text-primary">
+          {order.scheduledExtra ?? 'Scheduled'}
+        </div>
+      ) : null}
+      <button
+        type="button"
+        onClick={() => onSelect?.(order)}
+        className="w-full cursor-pointer text-start outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        {order.scheduled ? (
-          <div className="border-b border-primary/30 bg-primary/10 px-3 py-2 text-center text-xs font-medium text-primary">
-            {order.scheduledExtra ?? 'Scheduled'}
-          </div>
-        ) : null}
         <div className="space-y-3 p-4">
           <div>
             <p className="text-xs text-muted-foreground">{order.storeLabel}</p>
@@ -41,7 +42,16 @@ export function OrderCard({ order }: OrderCardProps) {
             </span>
           </div>
         </div>
-      </Card>
-    </Link>
+      </button>
+      <div className="border-t border-border px-4 pb-3 pt-0">
+        <Link
+          to={`/dashboard/orders/${order.id}`}
+          className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Open full page
+        </Link>
+      </div>
+    </Card>
   );
 }

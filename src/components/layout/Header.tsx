@@ -27,6 +27,12 @@ function getHeaderTitle(pathname: string): string {
   if (pathname === '/dashboard/store-settings') {
     return 'Store Settings';
   }
+  if (pathname === '/dashboard/support') {
+    return 'Support';
+  }
+  if (pathname === '/dashboard/about') {
+    return 'About';
+  }
   return 'Home page';
 }
 

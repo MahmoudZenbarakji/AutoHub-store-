@@ -85,10 +85,16 @@ import { ReportsHub } from '@/pages/ReportsHub';
 import { StockManagement } from '@/pages/StockManagement';
 import { ClientsReviews } from '@/pages/ClientsReviews';
 import { StoreSettings } from '@/pages/StoreSettings';
+import { Support } from '@/pages/Support';
+import { About } from '@/pages/About';
+import { Login } from '@/pages/Login';
+import { ResetPassword } from '@/pages/ResetPassword';
 
 export function AppRoutingSetup() {
   return (
     <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<MainLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/orders/:orderId" element={<OrderDetails />} />
@@ -96,6 +102,8 @@ export function AppRoutingSetup() {
         <Route path="/dashboard/reports-hub" element={<ReportsHub />} />
         <Route path="/dashboard/clients-reviews" element={<ClientsReviews />} />
         <Route path="/dashboard/store-settings" element={<StoreSettings />} />
+        <Route path="/dashboard/support" element={<Support />} />
+        <Route path="/dashboard/about" element={<About />} />
         <Route
           path="/dashboard/stock-management/parent/:parentId/sub/:subId/product/:productId"
           element={<StockManagement />}

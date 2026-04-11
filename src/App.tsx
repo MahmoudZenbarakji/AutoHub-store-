@@ -1,4 +1,5 @@
 import { AppRouting } from '@/routing/app-routing';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 import { ThemeProvider } from 'next-themes';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
@@ -20,8 +21,10 @@ export function App() {
       <HelmetProvider>
         <LoadingBarContainer>
           <BrowserRouter basename={BASE_URL}>
-            <Toaster />
-            <AppRouting />
+            <LanguageProvider>
+              <Toaster />
+              <AppRouting />
+            </LanguageProvider>
           </BrowserRouter>
         </LoadingBarContainer>
       </HelmetProvider>
