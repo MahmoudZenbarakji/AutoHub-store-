@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   Star,
 } from 'lucide-react';
+import { BrandLogo } from '@/components/layout/BrandLogo';
 import { cn } from '@/lib/utils';
 import type { NavItem } from '@/mock/dashboardData';
 
@@ -60,15 +61,14 @@ export function Sidebar({
           )}
         >
           <div className={cn('flex min-w-0 items-center gap-2', collapsed && 'justify-center')}>
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">
-              AH
-            </div>
-            {!collapsed ? (
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">AutoHub</p>
-                <p className="truncate text-xs text-muted-foreground">Stores</p>
-              </div>
-            ) : null}
+            <NavLink
+              to="/dashboard"
+              end
+              className="flex min-w-0 shrink-0 items-center outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="SparesHub home"
+            >
+              <BrandLogo variant={collapsed ? 'sidebar-collapsed' : 'sidebar-expanded'} />
+            </NavLink>
           </div>
           <button
             type="button"

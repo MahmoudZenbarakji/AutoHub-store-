@@ -21,9 +21,20 @@ export function StockDetailEmpty() {
 type StockParentDetailProps = {
   parent: StockParent;
   basePath: string;
+  onStatusChange?: (parent: StockParent, checked: boolean) => void | Promise<void>;
+  onDelete?: (parentId: string) => void | Promise<void>;
+  onUpdate?: (parent: StockParent) => void | Promise<void>;
+  onAddSub?: (parent: StockParent) => void | Promise<void>;
 };
 
-export function StockParentDetail({ parent, basePath }: StockParentDetailProps) {
+export function StockParentDetail({
+  parent,
+  basePath,
+  onStatusChange,
+  onDelete,
+  onUpdate,
+  onAddSub,
+}: StockParentDetailProps) {
   const navigate = useNavigate();
   const firstSub = parent.subs[0];
 
@@ -36,7 +47,13 @@ export function StockParentDetail({ parent, basePath }: StockParentDetailProps) 
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold">Title (AR & EN)</h2>
-            <Button type="button" variant="ghost" size="sm" className="h-8 text-primary underline">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 text-primary underline"
+              onClick={() => void onUpdate?.(parent)}
+            >
               Edit
             </Button>
             <Button
@@ -45,6 +62,10 @@ export function StockParentDetail({ parent, basePath }: StockParentDetailProps) 
               size="sm"
               className="h-8 text-primary underline"
               onClick={() => {
+                if (onAddSub) {
+                  void onAddSub(parent);
+                  return;
+                }
                 if (firstSub) navigate(`${basePath}/parent/${parent.id}/sub/${firstSub.id}`);
               }}
             >
@@ -56,7 +77,7 @@ export function StockParentDetail({ parent, basePath }: StockParentDetailProps) 
               <span className="text-sm text-muted-foreground">Status (with toggle)</span>
               <Switch
                 checked={parent.statusOn}
-                onCheckedChange={() => undefined}
+                onCheckedChange={(v) => void onStatusChange?.(parent, v)}
                 size="sm"
                 aria-label="Status"
               />
@@ -77,10 +98,10 @@ export function StockParentDetail({ parent, basePath }: StockParentDetailProps) 
         </div>
       </div>
       <div className="mt-auto flex flex-wrap justify-between gap-2 border-t border-border p-4">
-        <Button type="button" variant="outline">
+        <Button type="button" variant="outline" onClick={() => void onDelete?.(parent.id)}>
           Delete Sub
         </Button>
-        <Button type="button" variant="primary">
+        <Button type="button" variant="primary" onClick={() => void onUpdate?.(parent)}>
           Update Sub
         </Button>
       </div>
@@ -92,9 +113,21 @@ type StockSubDetailProps = {
   parent: StockParent;
   sub: StockSub;
   basePath: string;
+  onStatusChange?: (parent: StockParent, sub: StockSub, checked: boolean) => void | Promise<void>;
+  onDelete?: (parentId: string, subId: string) => void | Promise<void>;
+  onUpdate?: (parent: StockParent, sub: StockSub) => void | Promise<void>;
+  onAddProduct?: (parent: StockParent, sub: StockSub) => void | Promise<void>;
 };
 
-export function StockSubDetail({ parent, sub, basePath }: StockSubDetailProps) {
+export function StockSubDetail({
+  parent,
+  sub,
+  basePath,
+  onStatusChange,
+  onDelete,
+  onUpdate,
+  onAddProduct,
+}: StockSubDetailProps) {
   const navigate = useNavigate();
   const firstProduct = sub.products[0];
 
@@ -107,7 +140,13 @@ export function StockSubDetail({ parent, sub, basePath }: StockSubDetailProps) {
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold">Title (AR & EN)</h2>
-            <Button type="button" variant="ghost" size="sm" className="h-8 text-primary underline">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 text-primary underline"
+              onClick={() => void onUpdate?.(parent, sub)}
+            >
               Edit
             </Button>
             <Button
@@ -116,6 +155,10 @@ export function StockSubDetail({ parent, sub, basePath }: StockSubDetailProps) {
               size="sm"
               className="h-8 text-primary underline"
               onClick={() => {
+                if (onAddProduct) {
+                  void onAddProduct(parent, sub);
+                  return;
+                }
                 if (firstProduct) {
                   navigate(
                     `${basePath}/parent/${parent.id}/sub/${sub.id}/product/${firstProduct.id}`,
@@ -131,7 +174,7 @@ export function StockSubDetail({ parent, sub, basePath }: StockSubDetailProps) {
               <span className="text-sm text-muted-foreground">Status (with toggle)</span>
               <Switch
                 checked={sub.statusOn}
-                onCheckedChange={() => undefined}
+                onCheckedChange={(v) => void onStatusChange?.(parent, sub, v)}
                 size="sm"
                 aria-label="Status"
               />
@@ -148,10 +191,10 @@ export function StockSubDetail({ parent, sub, basePath }: StockSubDetailProps) {
         </div>
       </div>
       <div className="mt-auto flex flex-wrap justify-between gap-2 border-t border-border p-4">
-        <Button type="button" variant="outline">
+        <Button type="button" variant="outline" onClick={() => void onDelete?.(parent.id, sub.id)}>
           Delete product
         </Button>
-        <Button type="button" variant="primary">
+        <Button type="button" variant="primary" onClick={() => void onUpdate?.(parent, sub)}>
           Update product
         </Button>
       </div>
@@ -161,9 +204,17 @@ export function StockSubDetail({ parent, sub, basePath }: StockSubDetailProps) {
 
 type StockProductDetailProps = {
   product: StockProduct;
+  onStatusChange?: (product: StockProduct, checked: boolean) => void | Promise<void>;
+  onDelete?: (productId: string) => void | Promise<void>;
+  onUpdate?: (product: StockProduct) => void | Promise<void>;
 };
 
-export function StockProductDetail({ product }: StockProductDetailProps) {
+export function StockProductDetail({
+  product,
+  onStatusChange,
+  onDelete,
+  onUpdate,
+}: StockProductDetailProps) {
   return (
     <Card className="flex min-h-[min(70vh,560px)] flex-1 flex-col border shadow-xs">
       <div className="border-b border-border p-4">
@@ -174,7 +225,13 @@ export function StockProductDetail({ product }: StockProductDetailProps) {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-semibold">Name (AR & EN)</h2>
-              <Button type="button" variant="ghost" size="sm" className="h-8 text-primary underline">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 text-primary underline"
+                onClick={() => void onUpdate?.(product)}
+              >
                 Edit
               </Button>
             </div>
@@ -198,7 +255,7 @@ export function StockProductDetail({ product }: StockProductDetailProps) {
             <span className="text-sm text-muted-foreground">Status (with toggle)</span>
             <Switch
               checked={product.statusOn}
-              onCheckedChange={() => undefined}
+              onCheckedChange={(v) => void onStatusChange?.(product, v)}
               size="sm"
               aria-label="Status"
             />
@@ -214,10 +271,10 @@ export function StockProductDetail({ product }: StockProductDetailProps) {
         </div>
       </div>
       <div className="mt-auto flex flex-wrap justify-between gap-2 border-t border-border p-4">
-        <Button type="button" variant="outline">
+        <Button type="button" variant="outline" onClick={() => void onDelete?.(product.id)}>
           Delete product
         </Button>
-        <Button type="button" variant="primary">
+        <Button type="button" variant="primary" onClick={() => void onUpdate?.(product)}>
           Update product
         </Button>
       </div>

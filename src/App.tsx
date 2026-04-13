@@ -14,7 +14,7 @@ export function App() {
       attribute="class"
       defaultTheme="light"
       storageKey="vite-theme"
-      enableSystem
+      enableSystem={false}
       disableTransitionOnChange
       enableColorScheme
     >

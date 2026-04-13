@@ -17,19 +17,19 @@
     />
     <style>
       .dark body {
-        background-color: hsl(240 10% 4%);
+        background-color: #182428;
       }
     </style>
     <script>
       (function () {
         try {
-          const theme = localStorage.getItem('theme') || 'system';
-          const prefersDark = window.matchMedia(
-            '(prefers-color-scheme: dark)',
-          ).matches;
-          const isDarkMode =
-            theme === 'dark' || (theme === 'system' && prefersDark);
+          const theme =
+            localStorage.getItem('vite-theme') ||
+            localStorage.getItem('theme') ||
+            'light';
+          const isDarkMode = theme === 'dark';
           if (isDarkMode) document.documentElement.classList.add('dark');
+          else document.documentElement.classList.remove('dark');
         } catch (e) {}
       })();
     </script>

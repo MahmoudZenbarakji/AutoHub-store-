@@ -6,60 +6,112 @@
 /** Dark Mode Variant **/
 @custom-variant dark (&:is(.dark *));
 
-/** Colors - https://tailwindcss.com/docs/colors **/
+/**
+ * Brand palette — Primary: Dull Gold · Secondary: Worn Navy · Accent: Muted Teal · Text: Charade
+ * (charade-900 inferred where not provided in spec)
+ */
 :root {
-  --background: var(--color-white);
-  --foreground: var(--color-zinc-950);
-  --card: var(--color-white);
-  --card-foreground: var(--color-zinc-950);
-  --popover: var(--color-white);
-  --popover-foreground: var(--color-zinc-950);
-  --primary: var(--color-zinc-900);
-  --primary-foreground: var(--color-white);
-  --secondary: var(--color-zinc-100);
-  --secondary-foreground: var(--color-zinc-900);
-  --muted: var(--color-zinc-100);
-  --muted-foreground: var(--color-zinc-500);
-  --accent: var(--color-zinc-100);
-  --accent-foreground: var(--color-zinc-900);
+  /* Dull Gold */
+  --dull-gold-50: #f8f5ed;
+  --dull-gold-100: #eae1c7;
+  --dull-gold-200: #e0d2ac;
+  --dull-gold-300: #d2bd86;
+  --dull-gold-400: #c9b16f;
+  --dull-gold-500: #bc9d4b;
+  --dull-gold-600: #ab8f44;
+  --dull-gold-700: #856f35;
+  --dull-gold-800: #675629;
+  --dull-gold-900: #4f4220;
+
+  /* Worn Navy */
+  --worn-navy-50: #ebeeef;
+  --worn-navy-100: #c1cace;
+  --worn-navy-200: #a3b1b6;
+  --worn-navy-300: #7a8d94;
+  --worn-navy-400: #607780;
+  --worn-navy-500: #385560;
+  --worn-navy-600: #334d57;
+  --worn-navy-700: #283c44;
+  --worn-navy-800: #1f2f35;
+  --worn-navy-900: #182428;
+
+  /* Muted Teal */
+  --muted-teal-50: #f0f4f5;
+  --muted-teal-100: #cfdedf;
+  --muted-teal-200: #b8ced0;
+  --muted-teal-300: #98b7bb;
+  --muted-teal-400: #84a9ad;
+  --muted-teal-500: #659499;
+  --muted-teal-600: #5c878b;
+  --muted-teal-700: #48696d;
+  --muted-teal-800: #385154;
+  --muted-teal-900: #2a3e40;
+
+  /* Charade (typography) */
+  --charade-50: #e9eaeb;
+  --charade-100: #bbbec1;
+  --charade-200: #9b9fa3;
+  --charade-300: #6d7379;
+  --charade-400: #51585f;
+  --charade-500: #252e37;
+  --charade-600: #222a32;
+  --charade-700: #1a2127;
+  --charade-800: #14191e;
+  --charade-900: #0d1014;
+
+  /* Semantic — light */
+  --background: var(--dull-gold-50);
+  --foreground: var(--charade-500);
+  --card: #ffffff;
+  --card-foreground: var(--charade-500);
+  --popover: #ffffff;
+  --popover-foreground: var(--charade-500);
+  --primary: var(--dull-gold-600);
+  --primary-foreground: var(--charade-900);
+  --secondary: var(--worn-navy-100);
+  --secondary-foreground: var(--worn-navy-700);
+  --muted: var(--muted-teal-50);
+  --muted-foreground: var(--charade-400);
+  --accent: var(--muted-teal-100);
+  --accent-foreground: var(--worn-navy-700);
   --destructive: var(--color-red-600);
-  --destructive-foreground: var(--color-white);
-  --chart-1: var(--color-blue-500);
-  --chart-2: var(--color-green-500);
-  --chart-3: var(--color-yellow-500);
-  --chart-4: var(--color-red-500);
-  --chart-5: var(--color-purple-500);
-  --border: oklch(94% 0.004 286.32); /* between --color-zinc-100 and --color-zinc-200 */
-  --input: var(--color-zinc-200);
-  --ring: var(--color-zinc-400);
+  --destructive-foreground: #ffffff;
+  --chart-1: var(--dull-gold-600);
+  --chart-2: var(--worn-navy-500);
+  --chart-3: var(--muted-teal-500);
+  --chart-4: var(--dull-gold-800);
+  --chart-5: var(--muted-teal-700);
+  --border: var(--dull-gold-200);
+  --input: var(--dull-gold-200);
+  --ring: var(--dull-gold-500);
   --radius: 0.5rem;
 }
 
 .dark {
-  --background: var(--color-zinc-950);
-  --foreground: var(--color-zinc-50);
-  --card: var(--color-zinc-950);
-  --card-foreground: var(--color-zinc-50);
-  --popover: var(--color-zinc-950);
-  --popover-foreground: var(--color-zinc-50);
-  --primary: var(--color-zinc-300);
-  --primary-foreground: var(--color-zinc-950);
-  --secondary: var(--color-zinc-800);
-  --secondary-foreground: var(--color-zinc-50);
-  --muted: var(--color-zinc-900);
-  --muted-foreground: var(--color-zinc-500);
-  --accent: var(--color-zinc-900);
-  --accent-foreground: var(--color-zinc-50);
+  --background: var(--worn-navy-900);
+  --foreground: var(--dull-gold-50);
+  --card: var(--worn-navy-800);
+  --card-foreground: var(--charade-50);
+  --popover: var(--worn-navy-800);
+  --popover-foreground: var(--charade-50);
+  --primary: var(--dull-gold-400);
+  --primary-foreground: var(--charade-900);
+  --secondary: var(--worn-navy-700);
+  --secondary-foreground: var(--dull-gold-100);
+  --muted: var(--worn-navy-800);
+  --muted-foreground: var(--charade-200);
+  --accent: var(--muted-teal-800);
+  --accent-foreground: var(--muted-teal-50);
   --destructive: var(--color-red-600);
-  --destructive-foreground: var(--color-white);
-  --chart-1: var(--color-blue-500);
-  --chart-2: var(--color-green-500);
-  --chart-3: var(--color-yellow-500);
-  --chart-4: var(--color-red-500);
-  --chart-5: var(--color-purple-500);
-  --border: var(--color-zinc-800);
-  --input: var(--color-zinc-800);
-  --ring: var(--color-zinc-600);
+  --destructive-foreground: #ffffff;
+  --chart-1: var(--dull-gold-400);
+  --chart-2: var(--worn-navy-300);
+  --chart-3: var(--muted-teal-400);
+  --chart-4: var(--dull-gold-600);
+  --chart-5: var(--muted-teal-600);
+  --border: var(--worn-navy-700);
+  --input: var(--worn-navy-700);
+  --ring: var(--dull-gold-500);
 }
 
 /** Theme Setup **/
@@ -90,6 +142,48 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /** Brand scales (Tailwind utilities: bg-dull-gold-500, text-charade-700, …) **/
+  --color-dull-gold-50: var(--dull-gold-50);
+  --color-dull-gold-100: var(--dull-gold-100);
+  --color-dull-gold-200: var(--dull-gold-200);
+  --color-dull-gold-300: var(--dull-gold-300);
+  --color-dull-gold-400: var(--dull-gold-400);
+  --color-dull-gold-500: var(--dull-gold-500);
+  --color-dull-gold-600: var(--dull-gold-600);
+  --color-dull-gold-700: var(--dull-gold-700);
+  --color-dull-gold-800: var(--dull-gold-800);
+  --color-dull-gold-900: var(--dull-gold-900);
+  --color-worn-navy-50: var(--worn-navy-50);
+  --color-worn-navy-100: var(--worn-navy-100);
+  --color-worn-navy-200: var(--worn-navy-200);
+  --color-worn-navy-300: var(--worn-navy-300);
+  --color-worn-navy-400: var(--worn-navy-400);
+  --color-worn-navy-500: var(--worn-navy-500);
+  --color-worn-navy-600: var(--worn-navy-600);
+  --color-worn-navy-700: var(--worn-navy-700);
+  --color-worn-navy-800: var(--worn-navy-800);
+  --color-worn-navy-900: var(--worn-navy-900);
+  --color-muted-teal-50: var(--muted-teal-50);
+  --color-muted-teal-100: var(--muted-teal-100);
+  --color-muted-teal-200: var(--muted-teal-200);
+  --color-muted-teal-300: var(--muted-teal-300);
+  --color-muted-teal-400: var(--muted-teal-400);
+  --color-muted-teal-500: var(--muted-teal-500);
+  --color-muted-teal-600: var(--muted-teal-600);
+  --color-muted-teal-700: var(--muted-teal-700);
+  --color-muted-teal-800: var(--muted-teal-800);
+  --color-muted-teal-900: var(--muted-teal-900);
+  --color-charade-50: var(--charade-50);
+  --color-charade-100: var(--charade-100);
+  --color-charade-200: var(--charade-200);
+  --color-charade-300: var(--charade-300);
+  --color-charade-400: var(--charade-400);
+  --color-charade-500: var(--charade-500);
+  --color-charade-600: var(--charade-600);
+  --color-charade-700: var(--charade-700);
+  --color-charade-800: var(--charade-800);
+  --color-charade-900: var(--charade-900);
 
   /** Animations **/
   --animate-marquee: marquee var(--duration) infinite linear;

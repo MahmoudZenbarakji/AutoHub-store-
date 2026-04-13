@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { BrandLogo } from '@/components/layout/BrandLogo';
 import { useLanguageChange } from '@/hooks/useLanguageChange';
 import { useLogout } from '@/hooks/useLogout';
 import { cn } from '@/lib/utils';
@@ -29,12 +30,12 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
         <button
           type="button"
           className={cn(
-            'flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-muted/80 text-[10px] font-semibold uppercase tracking-wide text-foreground shadow-sm transition hover:bg-muted',
+            'flex h-9 max-w-[6.5rem] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/80 px-1.5 shadow-sm transition hover:bg-muted',
             className,
           )}
           aria-label="Open profile menu"
         >
-          Logo
+          <BrandLogo variant="mark" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="w-56">

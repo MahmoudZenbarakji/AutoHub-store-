@@ -2,6 +2,7 @@ import { Menu } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/common/Button';
 import { ProfileDropdown } from '@/components/layout/ProfileDropdown';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { cn } from '@/lib/utils';
 
 type HeaderProps = {
@@ -97,6 +98,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
               </Button>
             </>
           ) : null}
+          <ThemeToggle />
           <ProfileDropdown />
         </div>
       </div>
