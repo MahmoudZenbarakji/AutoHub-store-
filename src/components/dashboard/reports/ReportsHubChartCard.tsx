@@ -12,13 +12,19 @@ type ReportsHubChartCardProps = {
 export function ReportsHubChartCard({ children, onExport, className }: ReportsHubChartCardProps) {
   return (
     <Card
-      className={cn('relative min-h-0 w-full min-w-0 overflow-hidden border p-4 pt-12 shadow-xs', className)}
+      className={cn(
+        'relative min-h-0 w-full min-w-0 overflow-hidden border p-4 shadow-xs',
+        onExport && 'pt-12',
+        className,
+      )}
     >
-      <div className="absolute end-3 top-3 z-10">
-        <Button type="button" variant="primary" size="sm" onClick={onExport}>
-          Export
-        </Button>
-      </div>
+      {onExport ? (
+        <div className="absolute end-3 top-3 z-10">
+          <Button type="button" variant="primary" size="sm" onClick={onExport}>
+            Export
+          </Button>
+        </div>
+      ) : null}
       {children}
     </Card>
   );

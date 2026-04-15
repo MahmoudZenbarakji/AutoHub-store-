@@ -1,6 +1,6 @@
 export function DashboardSkeleton() {
   return (
-    <div className="mx-auto max-w-[1200px] space-y-8 animate-pulse" aria-hidden>
+    <div className="w-full space-y-8 animate-pulse" aria-hidden>
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-0 rounded-xl border border-border bg-card p-4">
           {Array.from({ length: 5 }).map((_, index) => (

@@ -48,6 +48,7 @@ export type RecentTransaction = {
 };
 
 export const navigationItems: NavItem[] = [
+  { id: 'home', label: 'Home', href: '/dashboard' },
   { id: 'orders', label: 'Orders Dash', href: '/dashboard/orders' },
   { id: 'reports', label: 'Reports Hub', href: '/dashboard/reports-hub' },
   { id: 'stock', label: 'Stock Management', href: '/dashboard/stock-management' },

@@ -1,4 +1,4 @@
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { ReportsHubDonut } from '@/components/dashboard/reports/ReportsHubDonut';
 
 type PieDatum = { name: string; value: number };
 
@@ -7,49 +7,15 @@ type ReportsHubPiesProps = {
   rightData: PieDatum[];
 };
 
-const FILLS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)'];
-
 export function ReportsHubPies({ leftData, rightData }: ReportsHubPiesProps) {
   return (
-    <div className="grid min-h-[220px] w-full grid-cols-2 gap-4">
-      {[leftData, rightData].map((data, chartIndex) => (
-        <div key={chartIndex} className="min-h-[200px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Tooltip
-                contentStyle={{
-                  background: 'var(--popover)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)',
-                  color: 'var(--popover-foreground)',
-                }}
-              />
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius="52%"
-                outerRadius="78%"
-                paddingAngle={2}
-                stroke="var(--chart-1)"
-                strokeWidth={2}
-              >
-                {data.map((_, index) => (
-                  <Cell
-                    key={index}
-                    fill={FILLS[index % FILLS.length]}
-                    fillOpacity={0.2}
-                    stroke="var(--chart-1)"
-                    strokeWidth={2}
-                  />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      ))}
+    <div className="grid min-h-[240px] w-full grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8">
+      <div className="rounded-xl border border-border/60 bg-linear-to-b from-muted/30 to-transparent p-3 pt-4">
+        <ReportsHubDonut data={leftData} />
+      </div>
+      <div className="rounded-xl border border-border/60 bg-linear-to-b from-muted/30 to-transparent p-3 pt-4">
+        <ReportsHubDonut data={rightData} />
+      </div>
     </div>
   );
 }

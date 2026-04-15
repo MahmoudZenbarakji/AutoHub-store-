@@ -119,19 +119,40 @@ export function isGeneralPayloadEmpty(payload: Record<string, string>): boolean 
   return Object.keys(payload).length === 0;
 }
 
+function sortDaysByWeekOrder(days: string[]): string[] {
+  const order = new Map(weekDays.map((d, i) => [d, i]));
+  return [...new Set(days)].sort((a, b) => (order.get(a) ?? 99) - (order.get(b) ?? 99));
+}
+
+/** Maps API off-day strings to canonical weekday labels and sorts Mon–Sun. */
+export function normalizeOffDaysFromApi(raw: unknown): string[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const out: string[] = [];
+  for (const item of raw) {
+    if (typeof item !== 'string' || item.trim() === '') {
+      continue;
+    }
+    const match = weekDays.find((d) => d.toLowerCase() === item.toLowerCase());
+    out.push(match ?? item);
+  }
+  return sortDaysByWeekOrder(out);
+}
+
 export function readHoursFromSettings(
   settings: Record<string, unknown> | null,
 ): {
   dailyFrom: string;
   dailyTo: string;
-  offDay: string;
+  offDays: string[];
   twentyFourHours: boolean;
 } {
   if (!settings) {
     return {
       dailyFrom: '06:00',
       dailyTo: '18:00',
-      offDay: 'Friday',
+      offDays: ['Friday'],
       twentyFourHours: false,
     };
   }
@@ -142,12 +163,7 @@ export function readHoursFromSettings(
   const to =
     typeof settings.daily_to === 'string' ? settings.daily_to.slice(0, 5) : '18:00';
   const off = settings.off_days;
-  let offDay = 'Friday';
-  if (Array.isArray(off) && off.length > 0 && typeof off[0] === 'string') {
-    const raw = off[0];
-    const match = weekDays.find((d) => d.toLowerCase() === raw.toLowerCase());
-    offDay = match ?? raw;
-  }
+  const offDays = Array.isArray(off) ? normalizeOffDaysFromApi(off) : ['Friday'];
   const twentyFourHours = Boolean(settings.is_24_hours);
-  return { dailyFrom: from, dailyTo: to, offDay, twentyFourHours };
+  return { dailyFrom: from, dailyTo: to, offDays, twentyFourHours };
 }

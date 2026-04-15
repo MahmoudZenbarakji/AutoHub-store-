@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Headphones,
+  Home,
   Package,
   Settings,
   ShoppingCart,
@@ -14,6 +15,7 @@ import { cn } from '@/lib/utils';
 import type { NavItem } from '@/mock/dashboardData';
 
 const iconMap: Record<string, typeof ShoppingCart> = {
+  home: Home,
   orders: ShoppingCart,
   reports: BarChart3,
   stock: Package,

@@ -11,6 +11,7 @@ import {
   generalFormFromSettings,
   isGeneralPayloadEmpty,
   normalizePayload,
+  normalizeOffDaysFromApi,
   readHoursFromSettings,
   type GeneralSettingsFormState,
 } from '@/utils/mapStoreSettings';
@@ -20,7 +21,7 @@ export function useStoreSettingsPage() {
   const [general, setGeneral] = useState<GeneralSettingsFormState>(emptyGeneralForm);
   const [dailyFrom, setDailyFrom] = useState('06:00');
   const [dailyTo, setDailyTo] = useState('18:00');
-  const [offDay, setOffDay] = useState('Friday');
+  const [offDays, setOffDays] = useState<string[]>(['Friday']);
   const [twentyFourHours, setTwentyFourHours] = useState(false);
   const [generalError, setGeneralError] = useState('');
   const [generalSuccess, setGeneralSuccess] = useState('');
@@ -44,7 +45,7 @@ export function useStoreSettingsPage() {
           const hours = readHoursFromSettings(data);
           setDailyFrom(hours.dailyFrom);
           setDailyTo(hours.dailyTo);
-          setOffDay(hours.offDay);
+          setOffDays(hours.offDays);
           setTwentyFourHours(hours.twentyFourHours);
         }
       } catch {
@@ -69,6 +70,15 @@ export function useStoreSettingsPage() {
     },
     [],
   );
+
+  const toggleOffDay = useCallback((day: string) => {
+    setOffDays((previous) => {
+      const next = previous.includes(day)
+        ? previous.filter((d) => d !== day)
+        : [...previous, day];
+      return normalizeOffDaysFromApi(next);
+    });
+  }, []);
 
   const applyLocationFromMap = useCallback(
     (latitude: string, longitude: string, locationLabel: string) => {
@@ -119,7 +129,7 @@ export function useStoreSettingsPage() {
         await updateWorkingHours({
           daily_from: dailyFrom,
           daily_to: dailyTo,
-          off_days: [offDay],
+          off_days: offDays,
           is_24_hours: twentyFourHours,
         });
         setHoursSuccess('Saved.');
@@ -129,7 +139,7 @@ export function useStoreSettingsPage() {
         setSavingHours(false);
       }
     },
-    [dailyFrom, dailyTo, offDay, twentyFourHours],
+    [dailyFrom, dailyTo, offDays, twentyFourHours],
   );
 
   return {
@@ -141,8 +151,9 @@ export function useStoreSettingsPage() {
     setDailyFrom,
     dailyTo,
     setDailyTo,
-    offDay,
-    setOffDay,
+    offDays,
+    setOffDays,
+    toggleOffDay,
     twentyFourHours,
     setTwentyFourHours,
     generalError,

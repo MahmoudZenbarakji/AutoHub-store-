@@ -42,7 +42,7 @@ export function Dashboard() {
       <Helmet>
         <title>AutoHub — Stores Dashboard</title>
       </Helmet>
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-8">
+      <div className="flex w-full flex-col gap-8">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}

@@ -1,4 +1,4 @@
-export type OrderColumnId = 'pending' | 'packing' | 'out_for_delivery';
+export type OrderColumnId = 'pending' | 'packing' | 'out_for_delivery' | 'completed';
 
 export type KanbanOrder = {
   id: string;
@@ -17,4 +17,5 @@ export const orderColumns: { id: OrderColumnId; title: string }[] = [
   { id: 'pending', title: 'Pending' },
   { id: 'packing', title: 'Packing & Handling' },
   { id: 'out_for_delivery', title: 'Out for delivery' },
+  { id: 'completed', title: 'Completed' },
 ];

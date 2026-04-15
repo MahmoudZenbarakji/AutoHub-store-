@@ -18,7 +18,7 @@ export function OrdersKanbanBoard({
   onSelectOrder,
 }: OrdersKanbanBoardProps) {
   return (
-    <div className="grid min-h-[min(70vh,720px)] w-full min-w-0 grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+    <div className="grid min-h-[min(70vh,720px)] w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-5">
       {columns.map((column) => {
         const columnOrders = orders.filter((order) => {
           if (order.column !== column.id) return false;

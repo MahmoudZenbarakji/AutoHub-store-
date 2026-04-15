@@ -1,16 +1,11 @@
+import { ChevronDown } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Card } from '@/components/common/Card';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { StoreLocationMap } from '@/components/store-settings/StoreLocationMap';
@@ -19,6 +14,7 @@ import { useLanguageChange } from '@/hooks/useLanguageChange';
 import { useStoreSettingsPage } from '@/hooks/useStoreSettingsPage';
 import { weekDays } from '@/mock/storeSettingsData';
 import { cn } from '@/lib/utils';
+import type { GeneralSettingsFormState } from '@/utils/mapStoreSettings';
 
 type InputKind = 'text' | 'email' | 'tel' | 'password' | 'textarea';
 
@@ -50,8 +46,8 @@ export function StoreSettings() {
     setDailyFrom,
     dailyTo,
     setDailyTo,
-    offDay,
-    setOffDay,
+    offDays,
+    toggleOffDay,
     twentyFourHours,
     setTwentyFourHours,
     generalError,
@@ -265,24 +261,46 @@ export function StoreSettings() {
                   />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 gap-y-3 text-sm">
-                  <span className="font-medium text-foreground">Off</span>
-                  <Select
-                    value={offDay}
-                    onValueChange={setOffDay}
-                    disabled={loading || savingHours}
-                  >
-                    <SelectTrigger className="w-[10rem]">
-                      <SelectValue placeholder="Day" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {weekDays.map((day) => (
-                        <SelectItem key={day} value={day}>
-                          {day}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex flex-wrap items-start gap-2 gap-y-3 text-sm">
+                  <span className="pt-2 font-medium text-foreground">Off</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={loading || savingHours}
+                        className="h-9 min-w-[12rem] justify-between gap-2 font-normal"
+                        aria-label="Select days off"
+                      >
+                        <span className="truncate text-start">
+                          {offDays.length === 0 ? (
+                            <span className="text-muted-foreground">No days off</span>
+                          ) : (
+                            offDays.join(', ')
+                          )}
+                        </span>
+                        <ChevronDown className="size-4 shrink-0 opacity-60" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-56 p-2" align="start">
+                      <div className="flex flex-col gap-1.5" role="group" aria-label="Days off">
+                        {weekDays.map((day) => (
+                          <label
+                            key={day}
+                            className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                          >
+                            <Checkbox
+                              checked={offDays.includes(day)}
+                              onCheckedChange={() => toggleOffDay(day)}
+                              disabled={loading || savingHours}
+                            />
+                            <span>{day}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <label className="flex cursor-pointer items-center gap-2 text-sm">

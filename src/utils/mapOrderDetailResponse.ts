@@ -52,7 +52,7 @@ export function mapApiStatusToOrderColumn(status: unknown): OrderColumnId {
     return 'packing';
   }
   if (s.includes('complete') || s.includes('delivered')) {
-    return 'out_for_delivery';
+    return 'completed';
   }
   if (s.includes('store_accept') || s.includes('accepted')) {
     return 'packing';

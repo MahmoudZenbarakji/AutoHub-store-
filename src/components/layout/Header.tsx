@@ -1,5 +1,5 @@
 import { Menu } from 'lucide-react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/common/Button';
 import { ProfileDropdown } from '@/components/layout/ProfileDropdown';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
@@ -60,20 +60,6 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
           >
             <Menu className="size-5" />
           </Button>
-          <NavLink
-            to="/dashboard"
-            end
-            className={({ isActive }) =>
-              cn(
-                'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-              )
-            }
-          >
-            Home
-          </NavLink>
         </div>
 
         <h1

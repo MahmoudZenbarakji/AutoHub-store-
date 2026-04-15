@@ -5,17 +5,17 @@ import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { Input } from '@/components/common/Input';
 import { ProfileDropdown } from '@/components/layout/ProfileDropdown';
-import { ReportsHubBarChart } from '@/components/dashboard/reports/ReportsHubBarChart';
 import { ReportsHubChartCard } from '@/components/dashboard/reports/ReportsHubChartCard';
+import { ReportsHubOrdersPie } from '@/components/dashboard/reports/ReportsHubOrdersPie';
 import { ReportsHubPies } from '@/components/dashboard/reports/ReportsHubPies';
-import { ReportsHubTrendLine } from '@/components/dashboard/reports/ReportsHubTrendLine';
+import { ReportsHubTrendPies } from '@/components/dashboard/reports/ReportsHubTrendPies';
 import { useReportsHub } from '@/hooks/useReportsHub';
 
 export function ReportsHub() {
   const [dateFrom, setDateFrom] = useState('2026-01-01');
   const [dateTo, setDateTo] = useState('2026-06-30');
 
-  const { pieLeft, pieRight, trendLine, barRows, loading, fetchReports, handleExport } = useReportsHub(
+  const { pieLeft, pieRight, trendLine, barRows, loading, fetchReports } = useReportsHub(
     dateFrom,
     dateTo,
   );
@@ -60,20 +60,16 @@ export function ReportsHub() {
             ) : null}
 
             <div className="grid w-full min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
-              <Card className="min-w-0 border border-border/80 p-3 shadow-none">
+              <Card className="min-w-0 border border-border/80 p-4 shadow-none sm:p-5">
                 <ReportsHubPies leftData={pieLeft} rightData={pieRight} />
               </Card>
 
-              <ReportsHubChartCard onExport={() => void handleExport()}>
-                <ReportsHubTrendLine data={trendLine} />
+              <ReportsHubChartCard>
+                <ReportsHubTrendPies data={trendLine} />
               </ReportsHubChartCard>
 
-              <ReportsHubChartCard onExport={() => void handleExport()}>
-                <ReportsHubBarChart data={barRows} />
-              </ReportsHubChartCard>
-
-              <ReportsHubChartCard onExport={() => void handleExport()}>
-                <ReportsHubTrendLine data={trendLine} />
+              <ReportsHubChartCard className="lg:col-span-2">
+                <ReportsHubOrdersPie data={barRows} />
               </ReportsHubChartCard>
             </div>
           </Card>
