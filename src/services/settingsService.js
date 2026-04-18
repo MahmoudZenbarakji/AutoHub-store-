@@ -5,6 +5,12 @@ export const getSettings = async () => {
   return res.data;
 };
 
+/** Options for store label multi-select (GET /api/dynamic-labels). */
+export const getDynamicLabels = async () => {
+  const res = await apiClient.get('/api/dynamic-labels');
+  return res.data;
+};
+
 export const updateGeneralSettings = async (data) => {
   const res = await apiClient.put('/api/store/settings/general', data);
   return res.data;
