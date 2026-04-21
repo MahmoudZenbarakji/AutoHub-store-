@@ -2,11 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAxiosErrorMessage } from '@/utils/apiError';
 import { getStoredAuthToken, setStoredAuthToken } from '@/utils/authToken';
-import {
-  extractAuthTokenFromResponse,
-  forgotPassword as forgotPasswordRequest,
-  login as loginRequest,
-} from '@/services/authService';
+import { extractAuthTokenFromResponse, login as loginRequest } from '@/services/authService';
 
 const initialFieldErrors = () => ({
   username: '',
@@ -34,8 +30,6 @@ export function useLoginForm() {
   const [fieldErrors, setFieldErrors] = useState(initialFieldErrors);
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
-  const [forgotPasswordFeedback, setForgotPasswordFeedback] = useState(null);
 
   useEffect(() => {
     if (getStoredAuthToken()) {
@@ -52,7 +46,6 @@ export function useLoginForm() {
       setUsername(value);
       clearFieldError('username');
       setFormError('');
-      setForgotPasswordFeedback(null);
     },
     [clearFieldError],
   );
@@ -97,44 +90,14 @@ export function useLoginForm() {
     [username, password, navigate],
   );
 
-  const handleForgotPassword = useCallback(async () => {
-    setForgotPasswordFeedback(null);
-    setFormError('');
-    if (!username.trim()) {
-      setFieldErrors((previous) => ({
-        ...previous,
-        username: 'Enter your username to reset password',
-      }));
-      return;
-    }
-    setForgotPasswordLoading(true);
-    try {
-      await forgotPasswordRequest(username.trim());
-      setForgotPasswordFeedback({
-        type: 'success',
-        message: 'If an account exists, reset instructions were sent.',
-      });
-    } catch (error) {
-      setForgotPasswordFeedback({
-        type: 'error',
-        message: getAxiosErrorMessage(error),
-      });
-    } finally {
-      setForgotPasswordLoading(false);
-    }
-  }, [username]);
-
   return {
     username,
     password,
     fieldErrors,
     formError,
     loading,
-    forgotPasswordLoading,
-    forgotPasswordFeedback,
     onUsernameChange,
     onPasswordChange,
     handleSubmit,
-    handleForgotPassword,
   };
 }

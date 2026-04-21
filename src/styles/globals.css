@@ -60,7 +60,7 @@
   --charade-900: #0d1014;
 
   /* Semantic — light */
-  --background: var(--dull-gold-50);
+  --background: #ffffff;
   --foreground: var(--charade-500);
   --card: #ffffff;
   --card-foreground: var(--charade-500);

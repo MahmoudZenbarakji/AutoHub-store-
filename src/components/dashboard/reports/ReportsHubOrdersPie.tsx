@@ -18,7 +18,7 @@ export function ReportsHubOrdersPie({ data }: ReportsHubOrdersPieProps) {
 
   return (
     <div className="min-h-[260px] w-full min-w-0 rounded-xl border border-border/60 bg-linear-to-br from-muted/20 via-transparent to-transparent p-2">
-      <ReportsHubDonut data={pieData} subtitle="Orders by category" innerRadius="42%" outerRadius="70%" />
+      <ReportsHubDonut data={pieData} subtitle="Top sold products (qty)" innerRadius="42%" outerRadius="70%" />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useId, useRef, type ChangeEvent } from 'react';
+import { useId, useRef, useState, type ChangeEvent } from 'react';
 import { Button } from '@/components/common/Button';
 import { cn } from '@/lib/utils';
 
@@ -7,8 +7,10 @@ const MAX_BYTES = 4 * 1024 * 1024;
 type StoreSettingsImageFieldProps = {
   id: string;
   label: string;
+  /** Preview URL (remote or blob). */
   value: string;
-  onChange: (next: string) => void;
+  /** Called with the selected image file, or null when removed. */
+  onFileChange: (file: File | null) => void;
   disabled?: boolean;
   /** Tall preview for cover, compact for logo */
   variant?: 'logo' | 'cover';
@@ -18,27 +20,35 @@ export function StoreSettingsImageField({
   id,
   label,
   value,
-  onChange,
+  onFileChange,
   disabled,
   variant = 'cover',
 }: StoreSettingsImageFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const hintId = useId();
+  const [fileError, setFileError] = useState('');
 
   const onFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
-    if (!file || !file.type.startsWith('image/')) {
+    setFileError('');
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      setFileError('Please choose an image file (PNG or JPG).');
       return;
     }
     if (file.size > MAX_BYTES) {
+      setFileError('Image must be 4 MB or smaller.');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      onChange(String(reader.result ?? ''));
-    };
-    reader.readAsDataURL(file);
+    onFileChange(file);
+  };
+
+  const onRemove = () => {
+    setFileError('');
+    onFileChange(null);
   };
 
   return (
@@ -47,8 +57,14 @@ export function StoreSettingsImageField({
         {label}
       </label>
       <p id={hintId} className="text-xs text-muted-foreground">
-        PNG or JPG, max 4&nbsp;MB. Used as {variant === 'logo' ? 'store logo' : 'cover image'}.
+        PNG or JPG, max 4&nbsp;MB. Uploaded as a file to the server. Used as{' '}
+        {variant === 'logo' ? 'store logo' : 'cover image'}.
       </p>
+      {fileError ? (
+        <p className="text-xs text-destructive" role="alert">
+          {fileError}
+        </p>
+      ) : null}
       <div
         className={cn(
           'overflow-hidden rounded-md border border-border bg-muted/30',
@@ -81,13 +97,7 @@ export function StoreSettingsImageField({
           Choose image
         </Button>
         {value ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={disabled}
-            onClick={() => onChange('')}
-          >
+          <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={onRemove}>
             Remove
           </Button>
         ) : null}

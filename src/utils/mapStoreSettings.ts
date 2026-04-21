@@ -44,14 +44,56 @@ export function normalizePayload<T extends Record<string, unknown>>(
   return record as T;
 }
 
-/** Merge root and nested `data` so values from either shape are picked up. */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Merge root, `data`, and API sections (`general_info`, `operating_hours`, `profile_menu`)
+ * so the form can read flat keys regardless of response shape.
+ */
 function flattenSettingsSource(raw: Record<string, unknown>): Record<string, unknown> {
-  const nested = raw.data;
-  const fromData =
-    nested != null && typeof nested === 'object' && !Array.isArray(nested)
-      ? (nested as Record<string, unknown>)
+  const fromData = isPlainObject(raw.data) ? (raw.data as Record<string, unknown>) : {};
+  const generalInfo = isPlainObject(raw.general_info)
+    ? (raw.general_info as Record<string, unknown>)
+    : isPlainObject(fromData.general_info)
+      ? (fromData.general_info as Record<string, unknown>)
       : {};
-  return { ...fromData, ...raw };
+  const operatingHours = isPlainObject(raw.operating_hours)
+    ? (raw.operating_hours as Record<string, unknown>)
+    : isPlainObject(fromData.operating_hours)
+      ? (fromData.operating_hours as Record<string, unknown>)
+      : {};
+  const profileMenu = isPlainObject(raw.profile_menu)
+    ? (raw.profile_menu as Record<string, unknown>)
+    : isPlainObject(fromData.profile_menu)
+      ? (fromData.profile_menu as Record<string, unknown>)
+      : {};
+  return {
+    ...fromData,
+    ...profileMenu,
+    ...operatingHours,
+    ...generalInfo,
+    ...raw,
+  };
+}
+
+function specializationFromSource(src: Record<string, unknown>): string {
+  const direct = src.specialization;
+  if (typeof direct === 'string' && direct.trim() !== '') {
+    return direct.trim();
+  }
+  const brands = src.specialization_brands;
+  if (!Array.isArray(brands)) {
+    return '';
+  }
+  const names: string[] = [];
+  for (const item of brands) {
+    if (isPlainObject(item) && typeof item.name === 'string' && item.name.trim() !== '') {
+      names.push(item.name.trim());
+    }
+  }
+  return names.join(', ');
 }
 
 export function generalFormFromSettings(
@@ -62,21 +104,27 @@ export function generalFormFromSettings(
     return base;
   }
   const src = flattenSettingsSource(settings);
-  const pick = (key: keyof GeneralSettingsFormState, alt?: string) => {
-    const v = src[key] ?? (alt ? src[alt] : undefined);
-    return v != null && String(v).trim() !== '' ? String(v) : '';
+  const pick = (key: keyof GeneralSettingsFormState, ...alts: string[]) => {
+    const keys = [key, ...alts];
+    for (const k of keys) {
+      const v = src[k as string];
+      if (v != null && String(v).trim() !== '') {
+        return String(v);
+      }
+    }
+    return '';
   };
-  const lat = pick('latitude', 'lat');
-  const lng = pick('longitude', 'lng');
+  const lat = pick('latitude', 'lat', 'location_lat');
+  const lng = pick('longitude', 'lng', 'location_lng');
   let location = pick('location');
   if (!location && lat && lng) {
     location = `${lat}, ${lng}`;
   }
   return {
     store_name: pick('store_name'),
-    logo: pick('logo', 'logo_url'),
-    cover: pick('cover', 'cover_url'),
-    specialization: pick('specialization'),
+    logo: pick('logo', 'logo_url', 'store_logo'),
+    cover: pick('cover', 'cover_url', 'store_cover'),
+    specialization: specializationFromSource(src),
     location,
     latitude: lat,
     longitude: lng,
@@ -86,6 +134,12 @@ export function generalFormFromSettings(
     contact_phone: pick('contact_phone', 'phone'),
     password: '',
   };
+}
+
+/** Local preview only (object URL or legacy data URL) — not sent as a string; use multipart file instead. */
+export function isLocalImagePreview(value: string): boolean {
+  const t = value.trim();
+  return t.startsWith('blob:') || t.startsWith('data:');
 }
 
 /** Only non-empty values are sent so users can update a single field without clearing others server-side. */
@@ -98,8 +152,12 @@ export function buildGeneralSettingsPayload(form: GeneralSettingsFormState): Rec
     }
   };
   put('store_name', form.store_name);
-  put('logo', form.logo);
-  put('cover', form.cover);
+  if (!isLocalImagePreview(form.logo)) {
+    put('logo', form.logo);
+  }
+  if (!isLocalImagePreview(form.cover)) {
+    put('cover', form.cover);
+  }
   put('specialization', form.specialization);
   put('location', form.location);
   put('latitude', form.latitude);
@@ -119,8 +177,36 @@ export function isGeneralPayloadEmpty(payload: Record<string, string>): boolean 
   return Object.keys(payload).length === 0;
 }
 
+export function isGeneralSubmitEmpty(
+  payload: Record<string, string>,
+  logoFile: File | null,
+  coverFile: File | null,
+): boolean {
+  return isGeneralPayloadEmpty(payload) && !logoFile && !coverFile;
+}
+
+/** Multipart body: text fields plus logo/cover files when the user picked new images. */
+export function buildGeneralSettingsFormData(
+  form: GeneralSettingsFormState,
+  logoFile: File | null,
+  coverFile: File | null,
+): FormData {
+  const fd = new FormData();
+  const payload = buildGeneralSettingsPayload(form);
+  for (const [key, value] of Object.entries(payload)) {
+    fd.append(key, value);
+  }
+  if (logoFile) {
+    fd.append('logo', logoFile, logoFile.name);
+  }
+  if (coverFile) {
+    fd.append('cover', coverFile, coverFile.name);
+  }
+  return fd;
+}
+
 function sortDaysByWeekOrder(days: string[]): string[] {
-  const order = new Map(weekDays.map((d, i) => [d, i]));
+  const order = new Map<string, number>(weekDays.map((d, i) => [d, i]));
   return [...new Set(days)].sort((a, b) => (order.get(a) ?? 99) - (order.get(b) ?? 99));
 }
 
@@ -156,14 +242,15 @@ export function readHoursFromSettings(
       twentyFourHours: false,
     };
   }
+  const src = flattenSettingsSource(settings);
   const from =
-    typeof settings.daily_from === 'string'
-      ? settings.daily_from.slice(0, 5)
+    typeof src.daily_from === 'string'
+      ? src.daily_from.slice(0, 5)
       : '06:00';
   const to =
-    typeof settings.daily_to === 'string' ? settings.daily_to.slice(0, 5) : '18:00';
-  const off = settings.off_days;
+    typeof src.daily_to === 'string' ? src.daily_to.slice(0, 5) : '18:00';
+  const off = src.off_days;
   const offDays = Array.isArray(off) ? normalizeOffDaysFromApi(off) : ['Friday'];
-  const twentyFourHours = Boolean(settings.is_24_hours);
+  const twentyFourHours = Boolean(src.is_24_hours);
   return { dailyFrom: from, dailyTo: to, offDays, twentyFourHours };
 }

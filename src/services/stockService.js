@@ -24,12 +24,14 @@ export const deleteCategory = async (id) => {
 };
 
 // Products
+/** GET /store/stock/products?q=&category_id= */
 export const getProducts = async (q = '', categoryId = '') => {
   const params = new URLSearchParams();
-  if (q !== undefined && q !== null) params.set('q', String(q));
+  const qs = String(q).trim();
+  if (qs) params.set('q', qs);
   if (categoryId) params.set('category_id', String(categoryId));
-  const qs = params.toString();
-  const res = await apiClient.get(`${STOCK_BASE}/products${qs ? `?${qs}` : ''}`);
+  const query = params.toString();
+  const res = await apiClient.get(`${STOCK_BASE}/products${query ? `?${query}` : ''}`);
   return res.data;
 };
 
@@ -45,12 +47,6 @@ export const updateProduct = async (id, data) => {
 
 export const deleteProduct = async (id) => {
   const res = await apiClient.delete(`${STOCK_BASE}/products/${id}`);
-  return res.data;
-};
-
-// Search
-export const searchStock = async (q) => {
-  const res = await apiClient.get(`${STOCK_BASE}?q=${encodeURIComponent(q)}`);
   return res.data;
 };
 

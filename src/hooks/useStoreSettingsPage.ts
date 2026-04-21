@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   getSettings,
   updateGeneralSettings,
@@ -6,10 +6,11 @@ import {
 } from '@/services/settingsService';
 import { getAxiosErrorMessage } from '@/utils/apiError';
 import {
+  buildGeneralSettingsFormData,
   buildGeneralSettingsPayload,
   emptyGeneralForm,
   generalFormFromSettings,
-  isGeneralPayloadEmpty,
+  isGeneralSubmitEmpty,
   normalizePayload,
   normalizeOffDaysFromApi,
   readHoursFromSettings,
@@ -19,6 +20,10 @@ import {
 export function useStoreSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [general, setGeneral] = useState<GeneralSettingsFormState>(emptyGeneralForm);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const logoBlobUrlRef = useRef<string | null>(null);
+  const coverBlobUrlRef = useRef<string | null>(null);
   const [dailyFrom, setDailyFrom] = useState('06:00');
   const [dailyTo, setDailyTo] = useState('18:00');
   const [offDays, setOffDays] = useState<string[]>(['Friday']);
@@ -41,6 +46,16 @@ export function useStoreSettingsPage() {
         }
         const data = normalizePayload<Record<string, unknown>>(raw);
         if (data) {
+          if (logoBlobUrlRef.current) {
+            URL.revokeObjectURL(logoBlobUrlRef.current);
+            logoBlobUrlRef.current = null;
+          }
+          if (coverBlobUrlRef.current) {
+            URL.revokeObjectURL(coverBlobUrlRef.current);
+            coverBlobUrlRef.current = null;
+          }
+          setLogoFile(null);
+          setCoverFile(null);
           setGeneral(generalFormFromSettings(data));
           const hours = readHoursFromSettings(data);
           setDailyFrom(hours.dailyFrom);
@@ -70,6 +85,37 @@ export function useStoreSettingsPage() {
     },
     [],
   );
+
+  const setStoreImage = useCallback((key: 'logo' | 'cover', file: File | null) => {
+    const ref = key === 'logo' ? logoBlobUrlRef : coverBlobUrlRef;
+    const setFile = key === 'logo' ? setLogoFile : setCoverFile;
+    if (ref.current) {
+      URL.revokeObjectURL(ref.current);
+      ref.current = null;
+    }
+    if (file) {
+      const url = URL.createObjectURL(file);
+      ref.current = url;
+      setGeneral((previous) => ({ ...previous, [key]: url }));
+      setFile(file);
+    } else {
+      setGeneral((previous) => ({ ...previous, [key]: '' }));
+      setFile(null);
+    }
+    setGeneralError('');
+    setGeneralSuccess('');
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (logoBlobUrlRef.current) {
+        URL.revokeObjectURL(logoBlobUrlRef.current);
+      }
+      if (coverBlobUrlRef.current) {
+        URL.revokeObjectURL(coverBlobUrlRef.current);
+      }
+    };
+  }, []);
 
   const toggleOffDay = useCallback((day: string) => {
     setOffDays((previous) => {
@@ -102,21 +148,45 @@ export function useStoreSettingsPage() {
       setSavingGeneral(true);
       try {
         const payload = buildGeneralSettingsPayload(general);
-        if (isGeneralPayloadEmpty(payload)) {
+        if (isGeneralSubmitEmpty(payload, logoFile, coverFile)) {
           setGeneralError('Add at least one field with a value before saving.');
           setSavingGeneral(false);
           return;
         }
-        await updateGeneralSettings(payload);
+        const hasImageFiles = logoFile != null || coverFile != null;
+        if (hasImageFiles) {
+          const formData = buildGeneralSettingsFormData(general, logoFile, coverFile);
+          await updateGeneralSettings(formData);
+          const raw = await getSettings();
+          const data = normalizePayload<Record<string, unknown>>(raw);
+          if (data) {
+            if (logoBlobUrlRef.current) {
+              URL.revokeObjectURL(logoBlobUrlRef.current);
+              logoBlobUrlRef.current = null;
+            }
+            if (coverBlobUrlRef.current) {
+              URL.revokeObjectURL(coverBlobUrlRef.current);
+              coverBlobUrlRef.current = null;
+            }
+            setLogoFile(null);
+            setCoverFile(null);
+            setGeneral((previous) => ({
+              ...generalFormFromSettings(data),
+              password: '',
+            }));
+          }
+        } else {
+          await updateGeneralSettings(payload);
+          setGeneral((previous) => ({ ...previous, password: '' }));
+        }
         setGeneralSuccess('Saved.');
-        setGeneral((previous) => ({ ...previous, password: '' }));
       } catch (error) {
         setGeneralError(getAxiosErrorMessage(error));
       } finally {
         setSavingGeneral(false);
       }
     },
-    [general],
+    [general, logoFile, coverFile],
   );
 
   const handleHoursSubmit = useCallback(
@@ -146,6 +216,7 @@ export function useStoreSettingsPage() {
     loading,
     general,
     setGeneralField,
+    setStoreImage,
     applyLocationFromMap,
     dailyFrom,
     setDailyFrom,

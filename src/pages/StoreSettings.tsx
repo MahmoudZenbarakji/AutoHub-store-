@@ -41,6 +41,7 @@ export function StoreSettings() {
     loading,
     general,
     setGeneralField,
+    setStoreImage,
     applyLocationFromMap,
     dailyFrom,
     setDailyFrom,
@@ -102,7 +103,7 @@ export function StoreSettings() {
                               id={`settings-${row.key}`}
                               label={row.label}
                               value={general[row.key]}
-                              onChange={(v) => setGeneralField(row.key, v)}
+                              onFileChange={(file) => setStoreImage(row.key, file)}
                               disabled={loading || savingGeneral}
                               variant={row.variant}
                             />

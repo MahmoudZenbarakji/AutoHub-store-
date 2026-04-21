@@ -1,7 +1,6 @@
 import { Download, Upload } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
-import { ProfileDropdown } from '@/components/layout/ProfileDropdown';
 
 type StockManagementToolbarProps = {
   searchQuery: string;
@@ -39,7 +38,6 @@ export function StockManagementToolbar({
           <Upload className="size-4" />
           Import
         </Button>
-        <ProfileDropdown />
       </div>
     </div>
   );

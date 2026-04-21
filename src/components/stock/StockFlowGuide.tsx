@@ -1,65 +1,117 @@
-import { ArrowBigRight, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type StockGuidePhase = 'home' | 'parent' | 'sub' | 'product';
 
 type StockFlowGuideProps = {
   phase: StockGuidePhase;
+  parentName?: string;
+  subName?: string;
+  productName?: string;
   className?: string;
 };
 
-const steps: { id: StockGuidePhase; label: string }[] = [
-  { id: 'home', label: 'Categories' },
-  { id: 'parent', label: 'Parent' },
-  { id: 'sub', label: 'Sub' },
-  { id: 'product', label: 'Product' },
-];
-
 const hints: Record<StockGuidePhase, string> = {
   home:
-    'Click a parent row in the tree (e.g. Parent n), or use Add Parent Category. Follow the blue arrows in the steps above.',
+    'Click a parent in the tree, or use Add Parent Category. You will open a sub-category next, then products.',
   parent:
     'Open a sub-category under this parent, or use + Add Sub. Then pick a product or add one.',
-  sub: 'Select a product in the tree, or use Add product to create one. Then edit details on the right.',
-  product: 'Update fields as needed, then use Update product or Delete product at the bottom.',
+  sub: 'Select a product in the tree, or use Add product. Then edit details on the right.',
+  product: 'Update fields as needed, then Save changes or Delete product.',
 };
 
-export function StockFlowGuide({ phase, className }: StockFlowGuideProps) {
-  const activeIndex = steps.findIndex((s) => s.id === phase);
+type Segment = { key: string; level: string; name?: string; state: 'done' | 'current' | 'upcoming' };
+
+function segmentsForPhase(
+  phase: StockGuidePhase,
+  parentName?: string,
+  subName?: string,
+  productName?: string,
+): Segment[] {
+  const p = parentName?.trim();
+  const s = subName?.trim();
+  const pr = productName?.trim();
+
+  const levels: Segment[] = [
+    { key: 'cat', level: 'Categories', state: 'upcoming' },
+    { key: 'par', level: 'Parent', name: p, state: 'upcoming' },
+    { key: 'sub', level: 'Sub', name: s, state: 'upcoming' },
+    { key: 'prod', level: 'Product', name: pr, state: 'upcoming' },
+  ];
+
+  if (phase === 'home') {
+    levels[0].state = 'current';
+    return levels;
+  }
+  if (phase === 'parent') {
+    levels[0].state = 'done';
+    levels[1].state = 'current';
+    return levels;
+  }
+  if (phase === 'sub') {
+    levels[0].state = 'done';
+    levels[1].state = 'done';
+    levels[2].state = 'current';
+    return levels;
+  }
+  levels[0].state = 'done';
+  levels[1].state = 'done';
+  levels[2].state = 'done';
+  levels[3].state = 'current';
+  return levels;
+}
+
+export function StockFlowGuide({
+  phase,
+  parentName,
+  subName,
+  productName,
+  className,
+}: StockFlowGuideProps) {
+  const segments = segmentsForPhase(phase, parentName, subName, productName);
 
   return (
     <div
       className={cn(
-        'rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-3 sm:px-4',
+        'rounded-xl border border-border bg-card px-4 py-3 shadow-xs sm:px-5 sm:py-4',
         className,
       )}
     >
-      <div className="mb-2 flex flex-wrap items-center justify-center gap-1 text-xs font-medium text-blue-700 dark:text-blue-400 sm:gap-2">
-        {steps.map((step, index) => (
-          <div key={step.id} className="flex items-center gap-1">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Stock structure
+      </p>
+      <nav
+        className="mb-3 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm"
+        aria-label="Category path"
+      >
+        {segments.map((seg, index) => (
+          <div key={seg.key} className="flex min-w-0 flex-wrap items-center gap-x-1">
             {index > 0 ? (
-              <ChevronRight className="size-4 shrink-0 text-blue-500" aria-hidden />
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground/80" aria-hidden />
             ) : null}
             <span
               className={cn(
-                'rounded-md px-2 py-1',
-                index <= activeIndex
-                  ? 'bg-blue-600 text-white dark:bg-blue-500'
-                  : 'bg-muted text-muted-foreground',
+                'inline-flex min-w-0 max-w-full items-baseline gap-1.5 rounded-md px-2 py-1',
+                seg.state === 'current' &&
+                  'bg-primary/12 font-semibold text-foreground ring-1 ring-primary/25',
+                seg.state === 'done' && 'bg-muted/80 text-foreground',
+                seg.state === 'upcoming' && 'text-muted-foreground',
               )}
+              aria-current={seg.state === 'current' ? 'step' : undefined}
             >
-              {step.label}
+              <span className="shrink-0">{seg.level}</span>
+              {seg.name ? (
+                <span className="truncate font-medium text-foreground/90" title={seg.name}>
+                  · {seg.name}
+                </span>
+              ) : null}
             </span>
           </div>
         ))}
-      </div>
-      <div className="flex gap-3 text-sm text-foreground">
-        <ArrowBigRight
-          className="size-8 shrink-0 rotate-[-25deg] text-blue-500 dark:text-blue-400"
-          aria-hidden
-        />
-        <p className="min-w-0 leading-snug text-muted-foreground">
-          <span className="font-medium text-blue-600 dark:text-blue-400">Next: </span>
+      </nav>
+      <div className="border-t border-border pt-3">
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          <span className="font-semibold text-foreground">Next: </span>
           {hints[phase]}
         </p>
       </div>

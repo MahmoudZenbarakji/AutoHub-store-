@@ -4,7 +4,6 @@ import { motion } from 'motion/react';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { Input } from '@/components/common/Input';
-import { ProfileDropdown } from '@/components/layout/ProfileDropdown';
 import { ReportsHubChartCard } from '@/components/dashboard/reports/ReportsHubChartCard';
 import { ReportsHubOrdersPie } from '@/components/dashboard/reports/ReportsHubOrdersPie';
 import { ReportsHubPies } from '@/components/dashboard/reports/ReportsHubPies';
@@ -49,9 +48,6 @@ export function ReportsHub() {
                   <span className="text-xs text-muted-foreground">to</span>
                   <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
                 </div>
-              </div>
-              <div className="flex items-center justify-end">
-                <ProfileDropdown />
               </div>
             </div>
 

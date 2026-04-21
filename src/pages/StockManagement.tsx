@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { toast } from 'sonner';
 import {
   StockDetailEmpty,
   StockParentDetail,
@@ -12,6 +13,7 @@ import { StockFlowGuide, type StockGuidePhase } from '@/components/stock/StockFl
 import { StockManagementToolbar } from '@/components/stock/StockManagementToolbar';
 import { StockTreeSidebar } from '@/components/stock/StockTreeSidebar';
 import {
+  defaultStockProduct,
   findParent,
   findProduct,
   findSub,
@@ -28,14 +30,17 @@ import {
   getCategoriesTree,
   getProducts,
   importStock,
-  searchStock,
   updateCategory,
   updateProduct,
 } from '@/services/stockService';
+import { getAxiosErrorMessage } from '@/utils/apiError';
 import {
+  buildProductCreateBody,
+  buildProductUpdateBody,
   isProductRow,
   mapProduct,
   mergeProductsIntoTree,
+  mergeProductsIntoTreeByCategoryIds,
   normalizeStockTreePayload,
   unwrapIdFromCreateResponse,
   unwrapList,
@@ -60,20 +65,6 @@ function categoryPayload(p: StockParent | StockSub) {
   };
 }
 
-function productPayload(p: StockProduct) {
-  return {
-    name: p.name,
-    description: p.description,
-    queue: p.queue,
-    price: p.price,
-    quantity: p.quantity,
-    tags: p.tags,
-    features: p.features,
-    vehicles_fit: p.vehiclesFit,
-    status_on: p.statusOn,
-  };
-}
-
 type StockDetailRouterProps = {
   basePath: string;
   parentId?: string;
@@ -93,6 +84,8 @@ type StockDetailRouterProps = {
   onProductStatusChange?: (product: StockProduct, checked: boolean) => void | Promise<void>;
   onProductDelete?: (productId: string) => void | Promise<void>;
   onProductUpdate?: (product: StockProduct) => void | Promise<void>;
+  parentNameForProduct?: string;
+  subNameForProduct?: string;
 };
 
 function StockDetailRouter({
@@ -103,6 +96,8 @@ function StockDetailRouter({
   parent,
   sub,
   product,
+  parentNameForProduct,
+  subNameForProduct,
   onParentStatusChange,
   onParentDelete,
   onParentUpdate,
@@ -115,8 +110,8 @@ function StockDetailRouter({
   onProductDelete,
   onProductUpdate,
 }: StockDetailRouterProps) {
-  if (!parentId) return <StockDetailEmpty />;
-  if (!parent) return <StockDetailEmpty />;
+  if (!parentId) return <StockDetailEmpty variant="home" />;
+  if (!parent) return <StockDetailEmpty variant="not-found" />;
   if (!subId) {
     return (
       <StockParentDetail
@@ -126,10 +121,11 @@ function StockDetailRouter({
         onDelete={onParentDelete}
         onUpdate={onParentUpdate}
         onAddSub={onAddSub}
+        onAddProduct={onAddProduct}
       />
     );
   }
-  if (!sub) return <StockDetailEmpty />;
+  if (!sub) return <StockDetailEmpty variant="not-found" />;
   if (!productId) {
     return (
       <StockSubDetail
@@ -143,10 +139,12 @@ function StockDetailRouter({
       />
     );
   }
-  if (!product) return <StockDetailEmpty />;
+  if (!product) return <StockDetailEmpty variant="not-found" />;
   return (
     <StockProductDetail
       product={product}
+      parentName={parentNameForProduct}
+      subName={subNameForProduct}
       onStatusChange={onProductStatusChange}
       onDelete={onProductDelete}
       onUpdate={onProductUpdate}
@@ -187,13 +185,17 @@ export function StockManagement() {
     const q = debouncedSearch.trim();
     const catId = selectedCategoryId;
     try {
-      if (q) {
-        const body = await searchStock(q);
-        setTree(normalizeStockTreePayload(body));
-        return;
-      }
       const full = await getCategoriesTree();
       let baseTree = normalizeStockTreePayload(full);
+      if (q) {
+        const body = await getProducts(q, catId || '');
+        const list = unwrapList(body);
+        if (list.length && isProductRow(list[0])) {
+          baseTree = mergeProductsIntoTreeByCategoryIds(baseTree, list.map(mapProduct));
+        }
+        setTree(baseTree);
+        return;
+      }
       if (catId) {
         const body = await getProducts('', catId);
         const list = unwrapList(body);
@@ -335,32 +337,23 @@ export function StockManagement() {
 
   const handleAddProduct = async (p: StockParent, s: StockSub) => {
     try {
-      const res = await createProduct({
-        category_id: s.id,
-        name: 'New product',
-        description: '',
-        queue: 0,
-        price: '0',
-        quantity: 0,
-        tags: '',
-        features: '',
-        vehicles_fit: '',
-        status_on: true,
-      });
+      const body = buildProductCreateBody(s.id, defaultStockProduct(s.id));
+      const res = await createProduct(body);
       const newId = unwrapIdFromCreateResponse(res);
       await refreshAfterMutation();
       if (newId) navigate(`${BASE}/parent/${p.id}/sub/${s.id}/product/${newId}`);
-    } catch {
-      /* silent */
+      toast.success('Product created');
+    } catch (err) {
+      toast.error(getAxiosErrorMessage(err));
     }
   };
 
   const handleProductStatus = async (p: StockProduct, checked: boolean) => {
     try {
-      await updateProduct(p.id, { ...productPayload(p), status_on: checked });
+      await updateProduct(p.id, { status: checked });
       await refreshAfterMutation();
-    } catch {
-      /* silent */
+    } catch (err) {
+      toast.error(getAxiosErrorMessage(err));
     }
   };
 
@@ -370,17 +363,19 @@ export function StockManagement() {
       await refreshAfterMutation();
       if (parentId && subId) navigate(`${BASE}/parent/${parentId}/sub/${subId}`);
       else navigate(BASE);
-    } catch {
-      /* silent */
+      toast.success('Product deleted');
+    } catch (err) {
+      toast.error(getAxiosErrorMessage(err));
     }
   };
 
   const handleProductUpdate = async (p: StockProduct) => {
     try {
-      await updateProduct(p.id, productPayload(p));
+      await updateProduct(p.id, buildProductUpdateBody(p));
       await refreshAfterMutation();
-    } catch {
-      /* silent */
+      toast.success('Product updated');
+    } catch (err) {
+      toast.error(getAxiosErrorMessage(err));
     }
   };
 
@@ -404,7 +399,12 @@ export function StockManagement() {
           onExportAll={handleExport}
           onImport={handleImportClick}
         />
-        <StockFlowGuide phase={phase} />
+        <StockFlowGuide
+          phase={phase}
+          parentName={parent?.name}
+          subName={sub?.name}
+          productName={product?.name}
+        />
         <div className="flex min-h-[60vh] w-full min-w-0 flex-col gap-4 lg:flex-row">
           <StockTreeSidebar
             tree={tree}
@@ -412,6 +412,7 @@ export function StockManagement() {
             selectedSubId={subId}
             selectedProductId={productId}
             searchQuery={searchQuery}
+            serverSearchActive={Boolean(debouncedSearch.trim())}
             onSelectParent={(id) => navigate(`${BASE}/parent/${id}`)}
             onSelectSub={(p, s) => navigate(`${BASE}/parent/${p}/sub/${s}`)}
             onSelectProduct={(p, s, pr) =>
@@ -434,6 +435,8 @@ export function StockManagement() {
               parent={parent}
               sub={sub}
               product={product}
+              parentNameForProduct={parent?.name}
+              subNameForProduct={sub?.name}
               onParentStatusChange={handleParentStatus}
               onParentDelete={handleParentDelete}
               onParentUpdate={handleParentUpdate}

@@ -58,27 +58,36 @@ function mapPieArray(raw: unknown): PieDatum[] {
   return out.length > 0 ? out : [];
 }
 
-function defaultPiesFromTotals(o: Record<string, unknown>): { left: PieDatum[]; right: PieDatum[] } {
+/** Store reports summary: GET /store/reports/summary */
+function defaultPiesFromStoreSummary(o: Record<string, unknown>): { left: PieDatum[]; right: PieDatum[] } {
   const sales = num(o.total_sales ?? o.totalSales ?? o.revenue);
   const orders = num(o.orders_count ?? o.ordersCount ?? o.orders);
-  const profit = num(o.profit ?? o.net_profit ?? o.netProfit);
-  const rest = Math.max(0, sales - profit);
+  const soldProducts = num(o.number_of_sold_products ?? o.numberOfSoldProducts);
+  const dh = num(o.total_discounts_paid_by_autohub ?? o.totalDiscountsPaidByAutohub);
+  const ds = num(o.total_discounts_paid_by_store ?? o.totalDiscountsPaidByStore);
 
   const left: PieDatum[] =
-    sales > 0 || profit > 0
+    dh > 0 || ds > 0
       ? [
-          { name: 'Profit', value: Math.max(profit, 0.0001) },
-          { name: 'Balance', value: Math.max(rest, 0.0001) },
+          { name: 'AutoHub discounts', value: Math.max(dh, 0.0001) },
+          { name: 'Store discounts', value: Math.max(ds, 0.0001) },
         ]
-      : [{ name: '—', value: 1 }];
+      : sales > 0
+        ? [
+            { name: 'Total sales', value: Math.max(sales, 0.0001) },
+            { name: 'Discounts', value: 0.0001 },
+          ]
+        : [{ name: '—', value: 1 }];
 
   const right: PieDatum[] =
-    orders > 0 || sales > 0
+    orders > 0 || soldProducts > 0
       ? [
           { name: 'Orders', value: Math.max(orders, 0.0001) },
-          { name: 'Sales', value: Math.max(sales, 0.0001) },
+          { name: 'Products sold', value: Math.max(soldProducts, 0.0001) },
         ]
-      : [{ name: '—', value: 1 }];
+      : sales > 0
+        ? [{ name: 'Sales', value: Math.max(sales, 0.0001) }, { name: '—', value: 0.0001 }]
+        : [{ name: '—', value: 1 }];
 
   return { left, right };
 }
@@ -92,14 +101,14 @@ export function mapSummaryToPieData(summaryPayload: unknown): { left: PieDatum[]
     return { left: leftApi, right: rightApi };
   }
   if (leftApi.length > 0) {
-    const fallback = defaultPiesFromTotals(o);
+    const fallback = defaultPiesFromStoreSummary(o);
     return { left: leftApi, right: fallback.right };
   }
   if (rightApi.length > 0) {
-    const fallback = defaultPiesFromTotals(o);
+    const fallback = defaultPiesFromStoreSummary(o);
     return { left: fallback.left, right: rightApi };
   }
-  return defaultPiesFromTotals(o);
+  return defaultPiesFromStoreSummary(o);
 }
 
 export function mapSummaryToTrend(summaryPayload: unknown): TrendPoint[] {
@@ -123,11 +132,96 @@ export function mapSummaryToTrend(summaryPayload: unknown): TrendPoint[] {
   }
   const sales = num(o.total_sales ?? o.totalSales);
   const orders = num(o.orders_count ?? o.ordersCount);
-  const profit = num(o.profit);
   return [
-    { label: 'Sales', a: sales, b: orders },
-    { label: 'Profit', a: profit, b: Math.max(0, sales - profit) },
+    { label: 'Period total', a: sales, b: orders },
   ];
+}
+
+/** GET /store/reports/orders — daily sales (a) and order count (b) from order_ready_time */
+export function mapOrdersReportToTrendPoints(ordersPayload: unknown): TrendPoint[] {
+  const list = extractArray(ordersPayload);
+  const byDay = new Map<string, { sales: number; count: number }>();
+  for (const item of list) {
+    const row = item != null && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+    const t = row.order_ready_time ?? row.created_at;
+    if (t == null || typeof t !== 'string') {
+      continue;
+    }
+    const day = t.slice(0, 10);
+    const bill = row.bill_details;
+    let orderTotal = 0;
+    if (bill != null && typeof bill === 'object') {
+      orderTotal = num((bill as Record<string, unknown>).total);
+    }
+    const cur = byDay.get(day) ?? { sales: 0, count: 0 };
+    cur.sales += orderTotal;
+    cur.count += 1;
+    byDay.set(day, cur);
+  }
+  const keys = [...byDay.keys()].sort();
+  if (keys.length > 0) {
+    return keys.map((label) => {
+      const v = byDay.get(label)!;
+      return { label, a: v.sales, b: v.count };
+    });
+  }
+  return [];
+}
+
+function billDetails(row: Record<string, unknown>): Record<string, unknown> | null {
+  const bill = row.bill_details ?? row.billDetails;
+  if (bill != null && typeof bill === 'object' && !Array.isArray(bill)) {
+    return bill as Record<string, unknown>;
+  }
+  return null;
+}
+
+/** Top sold products from GET /store/reports/summary data.top_sold_products */
+export function mapSummaryTopSoldToBarRows(summaryPayload: unknown): BarRow[] {
+  const o = unwrap(summaryPayload);
+  const list = o.top_sold_products ?? o.topSoldProducts;
+  if (!Array.isArray(list) || list.length === 0) {
+    return [];
+  }
+  return list.map((item) => {
+    const row = item != null && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+    return {
+      name: String(row.product_name ?? row.productName ?? '—').slice(0, 24),
+      primary: num(row.sold_quantity ?? row.soldQuantity),
+      secondary: 0,
+    };
+  });
+}
+
+/** Aggregate quantities by product from GET /store/reports/orders when summary has no top list */
+export function mapOrdersToProductBarRows(ordersPayload: unknown): BarRow[] {
+  const list = extractArray(ordersPayload);
+  const byProduct = new Map<string, number>();
+  for (const item of list) {
+    const row = item != null && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+    const products = row.products_in_order ?? row.productsInOrder;
+    if (!Array.isArray(products)) {
+      continue;
+    }
+    for (const p of products) {
+      if (p == null || typeof p !== 'object') {
+        continue;
+      }
+      const pr = p as Record<string, unknown>;
+      const name = String(pr.product_name ?? pr.productName ?? '—');
+      const q = num(pr.quantity);
+      byProduct.set(name, (byProduct.get(name) ?? 0) + q);
+    }
+  }
+  const rows = [...byProduct.entries()]
+    .map(([name, qty]) => ({
+      name: name.slice(0, 24),
+      primary: qty,
+      secondary: 0,
+    }))
+    .sort((x, y) => y.primary - x.primary)
+    .slice(0, 20);
+  return rows.length > 0 ? rows : [{ name: '—', primary: 0, secondary: 0 }];
 }
 
 export function mapOrdersReportToBarRows(ordersPayload: unknown): BarRow[] {
@@ -137,11 +231,16 @@ export function mapOrdersReportToBarRows(ordersPayload: unknown): BarRow[] {
   }
   return list.map((item, index) => {
     const row = item != null && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+    const bill = billDetails(row);
     const name = String(
       row.name ?? row.order_number ?? row.orderNumber ?? row.id ?? `Order ${index + 1}`,
     );
-    const primary = num(row.subtotal ?? row.total ?? row.amount ?? row.net_total ?? row.netTotal);
-    const secondary = num(row.tax ?? row.discount ?? row.items_count ?? row.itemsCount);
+    const primary = num(
+      bill?.subtotal ?? row.subtotal ?? row.total ?? row.amount ?? row.net_total ?? row.netTotal,
+    );
+    const secondary = num(
+      bill?.tax ?? bill?.discount_total ?? row.tax ?? row.discount ?? row.items_count ?? row.itemsCount,
+    );
     return { name: name.slice(0, 24), primary, secondary };
   });
 }

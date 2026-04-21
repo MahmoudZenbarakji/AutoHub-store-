@@ -11,6 +11,8 @@ type StockTreeSidebarProps = {
   selectedSubId?: string;
   selectedProductId?: string;
   searchQuery: string;
+  /** When true, list is already filtered by GET /store/stock/products?q= — skip client name filter */
+  serverSearchActive?: boolean;
   onSelectParent: (parentId: string) => void;
   onSelectSub: (parentId: string, subId: string) => void;
   onSelectProduct: (parentId: string, subId: string, productId: string) => void;
@@ -45,6 +47,7 @@ export function StockTreeSidebar({
   selectedSubId,
   selectedProductId,
   searchQuery,
+  serverSearchActive = false,
   onSelectParent,
   onSelectSub,
   onSelectProduct,
@@ -54,7 +57,10 @@ export function StockTreeSidebar({
   const [openParents, setOpenParents] = useState<Record<string, boolean>>({});
   const [openSubs, setOpenSubs] = useState<Record<string, boolean>>({});
 
-  const filtered = useMemo(() => filterTree(tree, searchQuery), [tree, searchQuery]);
+  const filtered = useMemo(
+    () => (serverSearchActive ? tree : filterTree(tree, searchQuery)),
+    [tree, searchQuery, serverSearchActive],
+  );
 
   useEffect(() => {
     if (selectedParentId) {
@@ -76,7 +82,13 @@ export function StockTreeSidebar({
 
   return (
     <Card className="flex w-full min-w-0 shrink-0 flex-col border shadow-xs md:w-80 lg:w-96">
-      <div className="border-b border-border p-3">
+      <div className="border-b border-border px-3 pb-2 pt-3">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Categories → Parent → Sub → Product
+        </p>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Open parent, then sub, then a product in the tree.
+        </p>
         <Button type="button" variant="outline" size="sm" className="w-full" onClick={onAddParent}>
           Add Parent Category
         </Button>

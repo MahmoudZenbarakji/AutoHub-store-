@@ -17,10 +17,10 @@ export function ReportsHubTrendPies({ data }: ReportsHubTrendPiesProps) {
   return (
     <div className="grid min-h-[240px] w-full grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-6">
       <div className="rounded-xl border border-border/60 bg-linear-to-b from-muted/25 to-transparent p-2">
-        <ReportsHubDonut data={seriesA} subtitle="Series A" />
+        <ReportsHubDonut data={seriesA} subtitle="Sales by day (bill total)" />
       </div>
       <div className="rounded-xl border border-border/60 bg-linear-to-b from-muted/25 to-transparent p-2">
-        <ReportsHubDonut data={seriesB} subtitle="Series B" />
+        <ReportsHubDonut data={seriesB} subtitle="Orders per day" />
       </div>
     </div>
   );

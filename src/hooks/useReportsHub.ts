@@ -3,13 +3,16 @@ import { toast } from 'sonner';
 import { exportReports, getReportsOrders, getReportsSummary } from '@/services/reportService';
 import { getAxiosErrorMessage } from '@/utils/apiError';
 import {
-  mapOrdersReportToBarRows,
+  mapOrdersReportToTrendPoints,
+  mapOrdersToProductBarRows,
   mapSummaryToPieData,
   mapSummaryToTrend,
+  mapSummaryTopSoldToBarRows,
   type BarRow,
   type PieDatum,
   type TrendPoint,
 } from '@/utils/mapReportsHubApi';
+import { getTopSoldProducts } from '@/services/reportService';
 
 function triggerBlobDownload(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
@@ -43,8 +46,22 @@ export function useReportsHub(dateFrom: string, dateTo: string) {
       const pies = mapSummaryToPieData(summaryRes);
       setPieLeft(pies.left);
       setPieRight(pies.right);
-      setTrendLine(mapSummaryToTrend(summaryRes));
-      setBarRows(mapOrdersReportToBarRows(ordersRes));
+
+      const trendFromOrders = mapOrdersReportToTrendPoints(ordersRes);
+      setTrendLine(
+        trendFromOrders.length > 0 ? trendFromOrders : mapSummaryToTrend(summaryRes),
+      );
+
+      let bars = mapSummaryTopSoldToBarRows(summaryRes);
+      if (bars.length === 0) {
+        try {
+          const topRes = await getTopSoldProducts(dateFrom, dateTo, 20);
+          bars = mapSummaryTopSoldToBarRows(topRes);
+        } catch {
+          bars = [];
+        }
+      }
+      setBarRows(bars.length > 0 ? bars : mapOrdersToProductBarRows(ordersRes));
     } catch (err) {
       toast.error(getAxiosErrorMessage(err));
     } finally {
